@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Paradigms Interactive Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0d0d2b 100%);
+    color: #e0e0e0;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .header {
+    text-align: center;
+    padding: 40px 20px 20px;
+    position: relative;
+  }
+
+  .header h1 {
+    font-size: 2.4rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #00d2ff, #7b2ff7, #ff6b6b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+  }
+
+  .header p {
+    font-size: 1rem;
+    color: #8888aa;
+    font-weight: 300;
+  }
+
+  /* ── Navigation Tabs ── */
+  .tab-nav {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 20px;
+    flex-wrap: wrap;
+  }
+
+  .tab-btn {
+    padding: 12px 28px;
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 50px;
+    background: rgba(255,255,255,0.04);
+    color: #aaa;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .tab-btn:hover { border-color: rgba(255,255,255,0.3); color: #fff; transform: translateY(-2px); }
+
+  .tab-btn.active-ml { border-color: #00d2ff; color: #00d2ff; background: rgba(0,210,255,0.1); box-shadow: 0 0 25px rgba(0,210,255,0.2); }
+  .tab-btn.active-dl { border-color: #7b2ff7; color: #7b2ff7; background: rgba(123,47,247,0.1); box-shadow: 0 0 25px rgba(123,47,247,0.2); }
+  .tab-btn.active-gen { border-color: #ff6b6b; color: #ff6b6b; background: rgba(255,107,107,0.1); box-shadow: 0 0 25px rgba(255,107,107,0.2); }
+  .tab-btn.active-agent { border-color: #00e676; color: #00e676; background: rgba(0,230,118,0.1); box-shadow: 0 0 25px rgba(0,230,118,0.2); }
+  .tab-btn.active-compare { border-color: #ffd740; color: #ffd740; background: rgba(255,215,64,0.1); box-shadow: 0 0 25px rgba(255,215,64,0.2); }
+
+  /* ── Content Area ── */
+  .content-area {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 10px 20px 40px;
+  }
+
+  .panel { display: none; animation: fadeIn 0.5s ease; }
+  .panel.active { display: block; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── Hero Section per Tab ── */
+  .hero-section {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    padding: 30px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 20px;
+    flex-wrap: wrap;
+  }
+
+  .hero-text { flex: 1; min-width: 280px; }
+  .hero-text h2 { font-size: 2rem; font-weight: 800; margin-bottom: 12px; }
+  .hero-text .tagline { font-size: 1rem; color: #888; line-height: 1.7; margin-bottom: 18px; }
+
+  .badge {
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin-right: 8px;
+    margin-bottom: 6px;
+  }
+
+  .badge-ml { background: rgba(0,210,255,0.15); color: #00d2ff; border: 1px solid rgba(0,210,255,0.3); }
+  .badge-dl { background: rgba(123,47,247,0.15); color: #b37bff; border: 1px solid rgba(123,47,247,0.3); }
+  .badge-gen { background: rgba(255,107,107,0.15); color: #ff6b6b; border: 1px solid rgba(255,107,107,0.3); }
+  .badge-agent { background: rgba(0,230,118,0.15); color: #00e676; border: 1px solid rgba(0,230,118,0.3); }
+
+  /* ── Complexity Meter ── */
+  .hero-visual { flex: 0 0 260px; text-align: center; }
+
+  .meter-container { position: relative; width: 200px; height: 200px; margin: 0 auto; }
+
+  .meter-svg { width: 200px; height: 200px; transform: rotate(-90deg); }
+
+  .meter-bg { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 12; }
+
+  .meter-fill { fill: none; stroke-width: 12; stroke-linecap: round; stroke-dasharray: 565; stroke-dashoffset: 565; transition: stroke-dashoffset 1.5s ease; }
+
+  .meter-label {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    text-align: center;
+  }
+  .meter-label .number { font-size: 2.5rem; font-weight: 800; }
+  .meter-label .subtitle { font-size: 0.75rem; color: #888; margin-top: 4px; }
+
+  /* ── Examples List ── */
+  .examples-section { margin-top: 24px; }
+  .examples-section h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 14px; }
+
+  .example-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 20px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+
+  .example-item:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.12); }
+
+  .example-icon { font-size: 1.6rem; flex-shrink: 0; margin-top: 2px; }
+  .example-item strong { display: block; font-size: 0.95rem; margin-bottom: 4px; }
+  .example-item span { font-size: 0.82rem; color: #888; line-height: 1.5; }
+
+  .example-detail {
+    display: none;
+    margin-top: 8px;
+    padding: 12px 16px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 8px;
+    font-size: 0.82rem;
+    color: #aaa;
+    line-height: 1.6;
+    border-left: 3px solid;
+  }
+
+  .example-detail.open { display: block; animation: fadeIn 0.3s ease; }
+
+  /* ── Comparison Table ── */
+  .compare-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 20px;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .compare-table th {
+    padding: 18px 16px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: rgba(255,255,255,0.06);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    text-align: left;
+  }
+
+  .compare-table td {
+    padding: 16px;
+    font-size: 0.85rem;
+    color: #bbb;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    background: rgba(255,255,255,0.02);
+    line-height: 1.5;
+  }
+
+  .compare-table tr:hover td { background: rgba(255,255,255,0.05); }
+
+  .compare-table .col-ml { border-top: 3px solid #00d2ff; }
+  .compare-table .col-dl { border-top: 3px solid #7b2ff7; }
+  .compare-table .col-gen { border-top: 3px solid #ff6b6b; }
+  .compare-table .col-agent { border-top: 3px solid #00e676; }
+
+  /* ── Evolution Flow ── */
+  .evolution-flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin: 30px 0;
+    flex-wrap: wrap;
+  }
+
+  .evo-node {
+    text-align: center;
+    padding: 20px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    min-width: 160px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+
+  .evo-node:hover { transform: scale(1.05); }
+  .evo-node .evo-icon { font-size: 2rem; margin-bottom: 8px; }
+  .evo-node h4 { font-size: 0.9rem; font-weight: 700; }
+  .evo-node p { font-size: 0.75rem; color: #888; margin-top: 4px; }
+
+  .evo-arrow { font-size: 1.5rem; color: #555; padding: 0 8px; }
+
+  /* ── Autonomy Slider ── */
+  .autonomy-section { margin-top: 30px; }
+  .autonomy-bar-container { margin-bottom: 18px; }
+
+  .autonomy-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .autonomy-bar {
+    height: 28px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .autonomy-fill {
+    height: 100%;
+    border-radius: 14px;
+    transition: width 1.5s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: rgba(0,0,0,0.6);
+  }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    padding: 30px;
+    font-size: 0.78rem;
+    color: #555;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🧠 AI Paradigms Dashboard</h1>
+  <p>Interactive guide to Machine Learning, Deep Learning, Generative AI &amp; Agentic AI</p>
+</div>
+
+<!-- Tab Navigation -->
+<div class="tab-nav">
+  <button class="tab-btn active-ml" data-tab="ml" onclick="switchTab('ml')">📊 Machine Learning</button>
+  <button class="tab-btn" data-tab="dl" onclick="switchTab('dl')">🔬 Deep Learning</button>
+  <button class="tab-btn" data-tab="gen" onclick="switchTab('gen')">✨ Generative AI</button>
+  <button class="tab-btn" data-tab="agent" onclick="switchTab('agent')">🤖 Agentic AI</button>
+  <button class="tab-btn" data-tab="compare" onclick="switchTab('compare')">⚖️ Compare All</button>
+</div>
+
+<div class="content-area">
+
+  <!-- ═══════ MACHINE LEARNING ═══════ -->
+  <div class="panel active" id="panel-ml">
+    <div class="hero-section">
+      <div class="hero-text">
+        <h2 style="color:#00d2ff">Machine Learning</h2>
+        <p class="tagline">Algorithms that <strong>learn patterns from data</strong> to make predictions and classifications — without being explicitly programmed for every rule.</p>
+        <span class="badge badge-ml">Supervised</span>
+        <span class="badge badge-ml">Unsupervised</span>
+        <span class="badge badge-ml">Reinforcement</span>
+        <span class="badge badge-ml">Structured Data</span>
+      </div>
+      <div class="hero-visual">
+        <div class="meter-container">
+          <svg class="meter-svg" viewBox="0 0 200 200">
+            <circle class="meter-bg" cx="100" cy="100" r="90"/>
+            <circle class="meter-fill" cx="100" cy="100" r="90" stroke="#00d2ff" id="meter-ml"/>
+          </svg>
+          <div class="meter-label">
+            <div class="number" style="color:#00d2ff">40%</div>
+            <div class="subtitle">Autonomy Level</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="examples-section">
+      <h3>💼 Business Use Cases <span style="font-size:0.8rem;color:#666;">(click to expand)</span></h3>
+      <div class="example-item" onclick="toggleDetail(this)">
+        <div class="example-icon">🏦</div>
+        <div>
+          <strong>Fraud Detection</strong>
+          <span>Banks flag anomalous credit card transactions in real time</span>
+          <div class="example-detail" style="border-color:#00d2ff;">Random Forest and Gradient Boosting models analyze transaction features (amount, location, time, merchant category) to classify each transaction as legitimate or potentially fraudulent. JPMorgan processes billions of transactions annually using ML models that reduce false positives by 50%.</div>
+        </div>
+      </div>
+      <div class="example-item" onclick="toggleDetail(this)">
+        <div class="example-icon">📦</div>
+        <div>
+          <strong>Demand Forecasting</strong>
+          <span>Predict inventory needs and optimize supply chains</span>
+          <div class="example-detail" style="border-color:#00d2ff;">Time-series ML models (ARIMA, XGBoost) analyze historical sales, seasonality, promotions, and external factors to forecast product demand. Walmart uses ML to predict demand for 500M+ item-store combinations weekly, reducing overstock by 30%.</div>
+        </div>
+      </div>
+      <div class="example-item" onclick="toggleDetail(this)">
+        <div class="example-icon">🎯</div>
+        <div>
+          <strong>Customer Segmentation</strong>
+          <span>Group users by behavior for targeted marketing campaigns</span>
+          <div class="example-detail" style="border-color:#00d2ff;">K-Means clustering and decision trees analyze purchase history, demographics, and engagement metrics to create actionable customer segments. Spotify uses ML clustering to identify listener personas and deliver personalized playlists.</div>
+        </div>
+      </div>
+      <div class="example-item" onclick="toggleDetail(this)">
+        <div class="example-icon">💡</div>
+        <div>
+          <strong>Churn Prediction</strong>
+          <span>Identify customers likely to leave before they do</span>
+          <div class="example-detail" style="border-color:#00d2ff;">Logistic regression and ensemble methods score customers on churn probability based on usage patterns, support interactions, and engagement decay. Telecom companies save millions annually by proactively retaining high-value customers flagged by ML churn models.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ DEEP LEARNING ═══════ -->
+  <div class="panel" id="panel-dl">
+    <div class="hero-section">
+      <div class="hero-text">
+        <h2 style="color:#b37bff">Deep Learning</h2>
+        <p class="tagline">A subset of ML using <strong>multi-layered neural networks</strong> to automatically extract features from raw, unstructured data — images, audio, text, and video.</p>
+        <span class="badge badge-dl">CNNs</span>
+        <span class="badge badge-dl">RNNs</span>
+        <span class="badge badge-dl">Transformers</span>
+        <span class="badge badge-dl">GPU-Powered</span>
+      </div>
+      <div class="hero-visual">
+        <div class="meter-container">
+          <svg class="meter-svg" viewBox="0 0 200 200">
+            <circle class="meter-bg" cx="100" cy="100" r="90"/>
+            <circle class="meter-fill" cx="100" cy="100" r="90" stroke="#7b2ff7" id="meter-dl"/>
+          </svg>
+          <div class="meter-label">
+            <div class="number" style="color:#b37bff">60%</div>
+            <div class="subtitle">Autonomy Level</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="examples-section">
+      <h3>💼 Business Use Cases <span style="font-size:0.8rem;color:#666;">(click to expand)</span></h3>
+      <div class="example-item" onclick="toggleDetail(this)">
+        <div class="example-icon">🏥</div>
+        <div>
+          <strong>Medical Imaging Diagnosis</strong>
+          <span>Detect tumors, fractures, and diseases from X-rays and MRIs</span>
+          <div class="example-detail" style="border-color:#7b2ff7;">Convolutional Neural Networks (CNNs) analyze millions of pixels in medical scans to identify patterns invisible to the human eye. Google Health's DL model detects breast cancer with 11.5% fewer false negatives than radiologists.</div>
+        </div>
+      </div>
+      <div class="example-item" onclick="toggleDetail(this)">
+        <div class="example-icon">🚗</div>
+        <div>
+          <strong>Autonomous Vehicle Perception</strong>
+          <span>Real-time object detection, lane tracking, and navigation</span>
+          <div class="example-detail" style="border-color:#7b2ff7;">Multi-modal DL networks fuse camera, LIDAR, and radar data to build a 3D understanding of the environment. Tesla's FSD system processes 1.5 billion frames of training data through deep neural networks to make driving decisions 10x per second.</div>
+        </div>
+      </div>
+      <div class="example-item" onclick="toggleDetail(this)">
+        <div class="example-icon">🗣️</div>
+        <div>
+          <strong>Speech Recognition &amp; NLP</strong>
+          <span>Voice assistants, transcription, and real-time translation</span>
+          <div class="example-detail" style="border-color:#7b2ff7;">Recurrent Neural Networks (RNNs) and Transformer architectures convert speech waveforms to text with near-human accuracy. OpenAI Whisper can transcribe audio in 97 languages, enabling global business communication at scale.</div>
+        </div>
+      </div>
+      <div class="example-item" onclick="toggleDetail(this)">
+        <div class="example-icon">🧬</div>
+        <div>
+          <strong>Drug Discovery &amp; Protein Folding</strong>
+          <span>Predict molecular structures and accelerate R&amp;D</span>
+          <div class="example-detail" style="border-color:#7b2ff7;">DeepMind's AlphaFold uses deep attention networks to predict 3D protein structures from amino acid sequences — a problem that stumped biology for 50 years. This has reduced drug target identification from years to hours, transforming pharmaceutical R&amp;D.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ GENERATIVE AI ═══════ -->
+  <div class="panel" id="panel-gen">
+    <div class="hero-section">
+      <div class="hero-text">
+        <h2 style="color:#ff6b6b">Generative AI</h2>
+        <p class="tagline">Deep learning models that <strong>create entirely new content</strong> — text, images, code, video, and audio — based on learned patterns from massive training datasets.</p>
+        <span class="badge badge-gen">LLMs</span>
+        <span class="badge badge-gen">Diffusion Models</span>
+        <span class="badge badge-gen">GANs</span>
+        <span class="badge badge-gen">Prompt-Driven</span>
+      </div>
+      <div class="hero-visual">
+        <div class="meter-container">
+          <svg class="meter-svg" viewBox="0 0 200 200">
+            <circle class="meter-bg" cx="100" cy="100" r="90"/>
+            <circle class="meter-fill" cx="100" cy="100" r="90" stroke="#ff6b6b" id="meter-gen"/>
+          </svg>
+          <div class="meter-label">
+            <div class="number" style="color:#ff6b6b">75%</div>
+            <div class="subtitle">Autonomy Level</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="examples-section">
+      <h3>💼 Business Use Cases <span style="font-size:0.8rem;color:#666;">(click to expand)</span></h3>
+      <div class="example-item" onclick="toggleDetail(this)">
+        <div class="example-icon">📝</div>
+        <div>
+          <strong>Marketing Content at Scale</strong>
+          <span>Auto-generate copy, ads, blogs, and product descriptions</span>
+          <div class="example-detail" style="border-color:#ff6b6b;">LLMs like GPT-4 and Claude generate human-quality marketing copy in seconds. Coca-Cola uses GenAI to produce localized ad campaigns across 200+ markets, reducing creative production time by 60% and costs by 40%.</div>
+        </div>
+      </div>
+      <div class="example-item" onclick="toggleDetail(this)">
+        <div class="example-icon">💻</div>
+        <div>
+          <strong>Code Generation &amp; Assistance</strong>
+          <span>Accelerate software development with AI pair programming</span>
+          <div class="example-detail" style="border-color:#ff6b6b;">GitHub Copilot (powered by OpenAI Codex) suggests code completions, writes functions, and explains complex codebases. Studies show developers using Copilot complete tasks 55% faster, fundamentally changing software engineering productivity.</div>
+        </div>
+      </div>
+      <div class="example-item" onclick="toggleDetail(this)">
+        <div class="example-icon">🎨</div>
+        <div>
+          <strong>Creative Design &amp; Visual Content</strong>
+          <span>Generate images, product mockups, and video from text prompts</span>
+          <div class="example-detail" style="border-color:#ff6b6b;">Diffusion models (DALL·E, Midjourney, Stable Diffusion) create photorealistic images from text descriptions. Fashion brands use GenAI to prototype new designs, generating 100+ variations in minutes vs. weeks of traditional design work.</div>
+        </div>
+      </div>
+      <div class="example-item" onclick="toggleDetail(this)">
+        <div class="example-icon">📄</div>
+        <div>
+          <strong>Document Intelligence</strong>
+          <span>Extract, summarize, and transform unstructured documents</span>
+          <div class="example-detail" style="border-color:#ff6b6b;">GenAI models parse contracts, invoices, research papers, and emails to extract structured data and generate summaries. Law firms use tools like Harvey AI to review contracts 80% faster, with GenAI flagging risks and suggesting amendments.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ AGENTIC AI ═══════ -->
+  <div class="panel" id="panel-agent">
+    <div class="hero-section">
+      <div class="hero-text">
+        <h2 style="color:#00e676">Agentic AI</h2>
+        <p class="tagline">AI systems that <strong>autonomously plan, decide, and execute multi-step tasks</strong> — integrating with enterprise tools, APIs, and workflows to achieve business goals without constant human oversight.</p>
+        <span class="badge badge-agent">Autonomous</span>
+        <span class="badge badge-agent">Multi-Step</span>
+        <span class="badge badge-agent">Tool-Using</span>
+        <span class="badge badge-agent">Goal-Oriented</span>
+      </div>
+      <div class="hero-visual">
+        <div class="meter-container">
+          <svg class="meter-svg" viewBox="0 0 200 200">
+            <circle class="meter-bg" cx="100" cy="100" r="90"/>
+            <circle class="meter-fill" cx="100" cy="100" r="90" stroke="#00e676" id="meter-agent"/>
+          </svg>
+          <div class="meter-label">
+            <div class="number" style="color:#00e676">95%</div>
+            <div class="subtitle">Autonomy Level</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="examples-section">
+      <h3>💼 Business Use Cases <span style="font-size:0.8rem;color:#666;">(click to expand)</span></h3>
+      <div class="example-item" onclick="toggleDetail(this)">
+        <div class="example-icon">📞</div>
+        <div>
+          <strong>Autonomous Customer Support</strong>
+          <span>End-to-end ticket resolution without human handoff</span>
+          <div class="example-detail" style="border-color:#00e676;">Agentic AI reads support tickets, queries the knowledge base, checks order status via APIs, processes refunds, sends personalized responses, and escalates only complex edge cases. Salesforce Agentforce autonomously resolves 60%+ of Tier 1 support tickets, reducing resolution time from hours to seconds.</div>
+        </div>
+      </div>
+      <div class="example-item" onclick="toggleDetail(this)">
+        <div class="example-icon">📊</div>
+        <div>
+          <strong>Sales Pipeline Orchestration</strong>
+          <span>Automate CRM updates, follow-ups, and deal progression</span>
+          <div class="example-detail" style="border-color:#00e676;">AI agents monitor CRM data, identify stale opportunities, draft personalized follow-up emails, schedule meetings, update pipeline stages, and alert managers to at-risk deals — all without prompting. HubSpot's agentic tools have shown 3x improvement in sales team productivity.</div>
+        </div>
+      </div>
+      <div class="example-item" onclick="toggleDetail(this)">
+        <div class="example-icon">🏭</div>
+        <div>
+          <strong>Supply Chain Orchestration</strong>
+          <span>Dynamic logistics, forecasting, and autonomous procurement</span>
+          <div class="example-detail" style="border-color:#00e676;">Agentic AI monitors global supply signals (weather, shipping delays, demand spikes), automatically reroutes shipments, adjusts inventory levels, and triggers purchase orders. Amazon uses agentic systems to manage 10B+ annual shipments across its fulfillment network.</div>
+        </div>
+      </div>
+      <div class="example-item" onclick="toggleDetail(this)">
+        <div class="example-icon">💰</div>
+        <div>
+          <strong>Financial Risk Management</strong>
+          <span>Autonomous portfolio monitoring and rebalancing</span>
+          <div class="example-detail" style="border-color:#00e676;">AI agents continuously analyze market conditions, news sentiment, regulatory changes, and portfolio exposure. They autonomously execute hedging strategies, rebalance allocations, and generate compliance reports. BlackRock's Aladdin platform uses agentic AI to manage $21.6 trillion in assets.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ COMPARISON ═══════ -->
+  <div class="panel" id="panel-compare">
+
+    <div class="evolution-flow">
+      <div class="evo-node" onclick="switchTab('ml')" style="border-color: rgba(0,210,255,0.3);">
+        <div class="evo-icon">📊</div>
+        <h4 style="color:#00d2ff">Machine Learning</h4>
+        <p>Learns from data</p>
+      </div>
+      <div class="evo-arrow">→</div>
+      <div class="evo-node" onclick="switchTab('dl')" style="border-color: rgba(123,47,247,0.3);">
+        <div class="evo-icon">🔬</div>
+        <h4 style="color:#b37bff">Deep Learning</h4>
+        <p>Neural networks</p>
+      </div>
+      <div class="evo-arrow">→</div>
+      <div class="evo-node" onclick="switchTab('gen')" style="border-color: rgba(255,107,107,0.3);">
+        <div class="evo-icon">✨</div>
+        <h4 style="color:#ff6b6b">Generative AI</h4>
+        <p>Creates content</p>
+      </div>
+      <div class="evo-arrow">→</div>
+      <div class="evo-node" onclick="switchTab('agent')" style="border-color: rgba(0,230,118,0.3);">
+        <div class="evo-icon">🤖</div>
+        <h4 style="color:#00e676">Agentic AI</h4>
+        <p>Acts autonomously</p>
+      </div>
+    </div>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th style="width:18%;">Dimension</th>
+          <th class="col-ml" style="color:#00d2ff;">Machine Learning</th>
+          <th class="col-dl" style="color:#b37bff;">Deep Learning</th>
+          <th class="col-gen" style="color:#ff6b6b;">Generative AI</th>
+          <th class="col-agent" style="color:#00e676;">Agentic AI</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Core Purpose</strong></td><td>Predict &amp; classify</td><td>Recognize complex patterns</td><td>Create new content</td><td>Autonomous action &amp; execution</td></tr>
+        <tr><td><strong>Human Input</strong></td><td>High (feature engineering)</td><td>Medium (architecture design)</td><td>Medium (prompt-driven)</td><td>Low (set goals only)</td></tr>
+        <tr><td><strong>Data Type</strong></td><td>Structured / labeled</td><td>Unstructured (images, audio)</td><td>Massive text/image corpora</td><td>Multi-source enterprise data</td></tr>
+        <tr><td><strong>Behavior</strong></td><td>Reactive / analytical</td><td>Reactive / perceptual</td><td>Reactive / generative</td><td>Proactive / autonomous</td></tr>
+        <tr><td><strong>Output</strong></td><td>Scores, labels, clusters</td><td>Features, classifications</td><td>Text, images, code, video</td><td>Completed tasks &amp; workflows</td></tr>
+        <tr><td><strong>Enterprise Tool</strong></td><td>Scikit-learn, SageMaker</td><td>TensorFlow, PyTorch</td><td>GPT-4, Claude, DALL·E</td><td>AutoGen, CrewAI, Agentforce</td></tr>
+        <tr><td><strong>Key Example</strong></td><td>Fraud detection</td><td>Medical imaging</td><td>Content generation</td><td>End-to-end workflow automation</td></tr>
+      </tbody>
+    </table>
+
+    <div class="autonomy-section">
+      <h3 style="margin-bottom: 16px;">🎚️ Autonomy &amp; Complexity Levels</h3>
+      <div class="autonomy-bar-container">
+        <div class="autonomy-label"><span style="color:#00d2ff;">Machine Learning</span><span>40%</span></div>
+        <div class="autonomy-bar"><div class="autonomy-fill" style="width:0%; background: linear-gradient(90deg, #004466, #00d2ff);" data-width="40%">ML</div></div>
+      </div>
+      <div class="autonomy-bar-container">
+        <div class="autonomy-label"><span style="color:#b37bff;">Deep Learning</span><span>60%</span></div>
+        <div class="autonomy-bar"><div class="autonomy-fill" style="width:0%; background: linear-gradient(90deg, #3a1177, #b37bff);" data-width="60%">DL</div></div>
+      </div>
+      <div class="autonomy-bar-container">
+        <div class="autonomy-label"><span style="color:#ff6b6b;">Generative AI</span><span>75%</span></div>
+        <div class="autonomy-bar"><div class="autonomy-fill" style="width:0%; background: linear-gradient(90deg, #772222, #ff6b6b);" data-width="75%">GenAI</div></div>
+      </div>
+      <div class="autonomy-bar-container">
+        <div class="autonomy-label"><span style="color:#00e676;">Agentic AI</span><span>95%</span></div>
+        <div class="autonomy-bar"><div class="autonomy-fill" style="width:0%; background: linear-gradient(90deg, #005533, #00e676);" data-width="95%">Agentic</div></div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<div class="footer">
+  Created by Saswat Sahu, Your Agentic Partner
+</div>
+
+<script>
+  const tabs = { ml: 'active-ml', dl: 'active-dl', gen: 'active-gen', agent: 'active-agent', compare: 'active-compare' };
+  const meterTargets = { ml: 40, dl: 60, gen: 75, agent: 95 };
+
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => { b.className = 'tab-btn'; });
+    document.querySelector(`[data-tab="${tab}"]`).classList.add(tabs[tab]);
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + tab).classList.add('active');
+
+    // Animate meter
+    if (meterTargets[tab] !== undefined) {
+      const circ = document.getElementById('meter-' + tab);
+      if (circ) {
+        const circumference = 2 * Math.PI * 90;
+        const offset = circumference - (meterTargets[tab] / 100) * circumference;
+        setTimeout(() => { circ.style.strokeDashoffset = offset; }, 100);
+      }
+    }
+
+    // Animate autonomy bars on compare tab
+    if (tab === 'compare') {
+      setTimeout(() => {
+        document.querySelectorAll('.autonomy-fill').forEach(bar => {
+          bar.style.width = bar.getAttribute('data-width');
+        });
+      }, 200);
+    }
+  }
+
+  function toggleDetail(item) {
+    const detail = item.querySelector('.example-detail');
+    if (detail) detail.classList.toggle('open');
+  }
+
+  // Initialize first tab meter
+  window.addEventListener('load', () => {
+    switchTab('ml');
+  });
+</script>
+
+</body>
+</html>
